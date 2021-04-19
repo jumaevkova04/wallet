@@ -10,6 +10,7 @@ func main() {
 	s.RegisterAccount("+992000000001")
 	s.RegisterAccount("+992000000002")
 	s.RegisterAccount("+992000000003")
-	s.ExportToFile("dump.txt")
+	s.ExportToFile("data/dump.txt")
+	s.ImportFromFile("data/dump.txt")
 
 }
