@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -318,5 +319,63 @@ func (s *Service) ExportToFile(path string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// ImportFromFile ...
+func (s *Service) ImportFromFile(path string) error {
+
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	content := make([]byte, 0)
+	buf := make([]byte, 4)
+	for {
+		read, err := file.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+		content = append(content, buf[:read]...)
+	}
+
+	data := string(content)
+	// fmt.Print(data)
+
+	accounts := strings.Split(data, "|")
+	accounts = accounts[:len(accounts)-1]
+
+	for _, account := range accounts {
+
+		value := strings.Split(account, ";")
+		id, err := strconv.Atoi(value[0])
+		if err != nil {
+			return err
+		}
+		phone := types.Phone(value[1])
+		balance, err := strconv.Atoi(value[2])
+		if err != nil {
+			return err
+		}
+		editAccount := &types.Account{
+			ID:      int64(id),
+			Phone:   phone,
+			Balance: types.Money(balance),
+		}
+
+		s.accounts = append(s.accounts, editAccount)
+		log.Print(account)
+	}
+
 	return nil
 }
