@@ -2,6 +2,10 @@ package wallet
 
 import (
 	"errors"
+	"log"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jumaevkova04/wallet/pkg/types"
@@ -58,9 +62,9 @@ func (s *Service) Deposit(accountID int64, amount types.Money) error {
 	}
 
 	var account *types.Account
-	for _, acc := range s.accounts {
-		if acc.ID == accountID {
-			account = acc
+	for _, cliceAccounts := range s.accounts {
+		if cliceAccounts.ID == accountID {
+			account = cliceAccounts
 			break
 		}
 	}
@@ -79,9 +83,9 @@ func (s *Service) Pay(accountID int64, amount types.Money, category types.Paymen
 		return nil, ErrAmountMustBePositive
 	}
 	var account *types.Account
-	for _, acc := range s.accounts {
-		if acc.ID == accountID {
-			account = acc
+	for _, cliceAccounts := range s.accounts {
+		if cliceAccounts.ID == accountID {
+			account = cliceAccounts
 			break
 		}
 	}
@@ -157,9 +161,9 @@ func (s *Service) Repeat(paymentID string) (*types.Payment, error) {
 		return nil, ErrAmountMustBePositive
 	}
 	var account *types.Account
-	for _, acc := range s.accounts {
-		if acc.ID == payment.AccountID {
-			account = acc
+	for _, cliceAccounts := range s.accounts {
+		if cliceAccounts.ID == payment.AccountID {
+			account = cliceAccounts
 			break
 		}
 	}
@@ -197,9 +201,9 @@ func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorit
 		return nil, ErrAmountMustBePositive
 	}
 	var account *types.Account
-	for _, acc := range s.accounts {
-		if acc.ID == payment.AccountID {
-			account = acc
+	for _, cliceAccounts := range s.accounts {
+		if cliceAccounts.ID == payment.AccountID {
+			account = cliceAccounts
 			break
 		}
 	}
@@ -246,9 +250,9 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 		return nil, ErrAmountMustBePositive
 	}
 	var account *types.Account
-	for _, acc := range s.accounts {
-		if acc.ID == favorite.AccountID {
-			account = acc
+	for _, cliceAccounts := range s.accounts {
+		if cliceAccounts.ID == favorite.AccountID {
+			account = cliceAccounts
 			break
 		}
 	}
@@ -273,4 +277,46 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 	}
 	s.payments = append(s.payments, payment)
 	return payment, nil
+}
+
+// Export ...
+// type Export byte[]
+
+// ExportToFile ...
+func (s *Service) ExportToFile(path string) error {
+
+	// service := &Service{}
+	a := s.accounts
+
+	cliceAccounts := []string{}
+	var acc *types.Account
+	var writeAccount string
+	for i, account := range a {
+		a[i] = account
+		acc = a[i]
+
+		id := strconv.Itoa(int(acc.ID))
+		phone := acc.Phone
+		balance := strconv.Itoa(int(acc.Balance))
+
+		cliceAccounts = append(cliceAccounts, id, ";", string(phone), ";", balance, "|")
+
+		writeAccount = strings.Join(cliceAccounts, "")
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	_, err = f.Write([]byte(writeAccount))
+	if err != nil {
+		return err
+	}
+	return nil
 }
